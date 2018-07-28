@@ -4,6 +4,7 @@ import time
 from sys import stdin, stdout
 # from neopixel import *
 import argparse
+import serial
 
 # Pin Definitons:
 # pwmPin = 23 # Broadcom pin 18 (P1 pin 12)
@@ -53,6 +54,7 @@ letter_led_map = {
 
 # Main program logic follows:
 if __name__ == '__main__':
+    ser = serial.Serial('/dev/ttyS0', 9600)
     # Process arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
@@ -69,12 +71,13 @@ if __name__ == '__main__':
 
     try:
         while 1:
-            print 'start loop'
-            selected_bone = stdin.readline()[:-1]
-            print selected_bone
-            # strip.setPixelColor(letter_led_map[selected_bone], color)
-            selected_bone_name = stdin.readline()[:-1]
-            print selected_bone_name
+            print ser.readline()
+            # print 'start loop'
+            # selected_bone = stdin.readline()[:-1]
+            # print selected_bone
+            # # strip.setPixelColor(letter_led_map[selected_bone], color)
+            # selected_bone_name = stdin.readline()[:-1]
+            # print selected_bone_name
             # strip.setPixelColor(letter_led_map[selected_bone_name], color)
             # GPIO.output(ledPin, GPIO.HIGH)
             # time.sleep(1)
