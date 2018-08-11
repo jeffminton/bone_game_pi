@@ -4,31 +4,18 @@ import time
 from sys import stdin, stdout
 # from neopixel import *
 import argparse
+import pygame
+import serial
+import random
+import wiringpi
+import os
+import smbus
+from enum import IntEnum
 
-# Pin Definitons:
-# pwmPin = 23 # Broadcom pin 18 (P1 pin 12)
-# ledPin = 18 # Broadcom pin 23 (P1 pin 16)
-# butPin = 17 # Broadcom pin 17 (P1 pin 11)
 
-# dc = 95 # duty cycle (0-100) for PWM pin
-
-# # Pin Setup:
-# GPIO.setmode(GPIO.BCM) # Broadcom pin-numbering scheme
-# GPIO.setup(ledPin, GPIO.OUT) # LED pin set as output
-# GPIO.setup(pwmPin, GPIO.OUT) # PWM pin set as output
-# pwm = GPIO.PWM(pwmPin, 50)  # Initialize PWM on pwmPin 100Hz frequency
-# GPIO.setup(butPin, GPIO.IN, pull_up_down=GPIO.PUD_UP) # Button pin set as input w/ pull-up
-
-# # Initial state for LEDs:
-# GPIO.output(ledPin, GPIO.LOW)
-# pwm.start(dc)
-
-# # LED strip configuration:
-# LED_COUNT   = 48      # Number of LED pixels.
-# LED_PIN     = 18      # GPIO pin connected to the pixels (must support PWM!).
-# LED_FREQ_HZ = 800000  # LED signal frequency in hertz (usually 800khz)
-# LED_DMA     = 5       # DMA channel to use for generating signal (try 5)
-# LED_INVERT  = False   # True to invert the signal (when using NPN transistor level shift)
+arduino_vcc_pin = 1
+arduino_gnd_pin = 4
+arduino_rst_pin = 5
 
 
 # letter_led_map = {
@@ -44,43 +31,195 @@ import argparse
 
 
 letter_led_map = {
-    'a': 1, 'b' : 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6,
-    'g': 7, 'h' : 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12,
-    'A': 13, 'B' : 14, 'C': 15, 'D': 16, 'E': 17, 'F': 18,
-    'G': 19, 'H' : 20, 'I': 21, 'J': 22, 'K': 23, 'L': 24
-    
+    'a': 0, 'b' : 1, 'c': 2, 'd': 3,
+    'A': 4, 'B' : 5, 'C': 6, 'D': 7
 }
+
+
+answer_key = {
+    'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D'
+}
+
+
+sound_cues = [
+    0.061, 0.198, 0.338, 0.494, 0.645,
+    0.795, 0.938, 1.075, 1.218, 1.371,
+    1.522, 1.672, 1.810, 1.950, 2.095,
+    2.246, 2.399, 2.615, 2.895, 3.051,
+    3.197, 3.347
+]
+
+
+color_list = [
+    [0, 255, 17], [255, 17, 0], 
+    [16, 0, 244], [119, 255, 0], 
+    [255, 0, 119], [0, 116, 248], 
+    [255, 230, 0], [230, 0, 255], 
+    [0, 251, 226], [255, 115, 0],
+    [115, 0, 255], [0, 251, 113]
+]
+
+
+class Commands(IntEnum):
+    set_led = 0
+    clear_then_set_led = 1
+    clear_strip = 2
+    set_multiple_leds = 3
+    reset_game = 4
+
+red = [255, 0, 0]
+green = [0, 255, 0]
+
+# # Define functions which animate LEDs in various ways.
+# def clear_strip(strip):
+#     """Wipe color across display a pixel at a time."""
+#     color = Color(0, 0, 0)
+#     for i in range(strip.numPixels()):
+#         strip.setPixelColor(i, color)
+#     strip.show()
+
+
+def write_data(data):
+    retry_max = 10
+    retry_count = 0
+
+    print( 'Write data: %s' % (data) )
+
+    while( retry_count < retry_max ):
+        try:
+            res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+            return res
+        except OSError:
+            print( 'Retry: %s' % (data) )
+            retry_count += 1
+
+
+
+def read_data():
+    retry_max = 10
+    retry_count = 0
+
+    print( 'Read Data' )
+
+    while( retry_count < retry_max ):
+        try:
+            res = bus.read_byte_data(DEVICE_ADDRESS, DEVICE_REG_MODE1)
+            return res
+        except OSError:
+            print( 'Retry Read Data' )
+            retry_count += 1
+
+
+
+def clear_strip():
+    data = [int(Commands.clear_strip)]
+    res = write_data(data)
+    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+
+def clear_strip_set_led(led_num, color):
+    data = [int(Commands.clear_then_set_led)]
+    data.append(led_num)
+    data.extend(color)
+    res = write_data(data)
+    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+def set_led(led_num, color):
+    data = [int(Commands.set_led)]
+    data.append(led_num)
+    data.extend(color)
+    res = write_data(data)
+    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+
+def reset_game():
+    data = [int(Commands.reset_game)]
+    res = write_data(data)
+
+
+def get_letter():
+    button = ''
+    while(button not in letter_led_map.keys()):
+        button = chr(read_data())
+        print( 'Read: %s' % (str(button)))
+    return button
+
+
+
 
 # Main program logic follows:
 if __name__ == '__main__':
+
     # Process arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
 
-    # # Create NeoPixel object with appropriate configuration.
-    # strip = Adafruit_NeoPixel(LED_COUNT, LED_PIN, LED_FREQ_HZ, LED_DMA, LED_INVERT, LED_BRIGHTNESS, LED_CHANNEL)
-    # # Intialize the library (must be called once before other functions).
-    # strip.begin()
-
     print ('Press Ctrl-C to quit.')
     if not args.clear:
         print('Use "-c" argument to clear LEDs on exit')
 
+    wiringpi.wiringPiSetup()
+
+    wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
+    wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
+
+    wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
+    
+    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.LOW)
+    time.sleep(.1)
+    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.HIGH)
+
+    bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
+
+    DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
+    DEVICE_REG_MODE1 = 0x00
+    DEVICE_REG_LEDOUT0 = 0x1d
+    
+    pygame.mixer.init()
+    pygame.mixer.music.load('sounds/beeps.wav')
+
+    reset_game()
+
     try:
         while 1:
-            print 'start loop'
-            selected_bone = stdin.readline()[:-1]
-            print selected_bone
-            # strip.setPixelColor(letter_led_map[selected_bone], color)
-            selected_bone_name = stdin.readline()[:-1]
-            print selected_bone_name
-            # strip.setPixelColor(letter_led_map[selected_bone_name], color)
-            # GPIO.output(ledPin, GPIO.HIGH)
-            # time.sleep(1)
-            # GPIO.output(ledPin, GPIO.LOW)
-            # time.sleep(1)
+            #Wait until the user chooses a bone
+            selected_bone = get_letter()
+            print('Selected Bone: %s' % (selected_bone))
+            clear_strip_set_led(letter_led_map[selected_bone], red)
+
+            #Waituntil the user chooses a bone name
+            selected_bone_name = get_letter()
+            print('Selected Bone Name: %s' % (selected_bone_name))
+            set_led(letter_led_map[selected_bone_name], green)
+            
+            # time.sleep(5)
+
+            pygame.mixer.music.play()
+
+            start_time = time.time()
+            current_cue = 0
+            while pygame.mixer.music.get_busy() == True and current_cue < len(sound_cues):
+                if time.time() - start_time >= sound_cues[current_cue]:
+                    clear_strip_set_led(random.randint(0, LED_COUNT - 1), color_list[random.randint(0, len(color_list) - 1)])
+                    current_cue += 1
+
+
+            if answer_key[selected_bone] == selected_bone_name:
+                clear_strip_set_led(letter_led_map[selected_bone], green)
+                set_led(letter_led_map[selected_bone_name], green)
+                #Play correct sound
+            else:
+                clear_strip_set_led(letter_led_map[selected_bone], green)
+                set_led(letter_led_map[selected_bone_name], red)
+                set_led(letter_led_map[answer_key[selected_bone]], green)
+                #play wrong sound
+
+            
+            reset_game()
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
+        if args.clear:
+            clear_strip()
         pass
         # pwm.stop() # stop PWM
         # GPIO.cleanup() # cleanup all GPIO
