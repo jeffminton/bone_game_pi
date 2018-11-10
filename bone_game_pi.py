@@ -86,6 +86,12 @@ green = [0, 255, 0]
 #     strip.show()
 
 
+def restart_teensy():
+    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.LOW)
+    time.sleep(1)
+    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.HIGH)
+
+
 def write_data(data):
     retry_max = 10
     retry_count = 0
@@ -170,12 +176,6 @@ if __name__ == '__main__':
 
     wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
     wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
-
-    wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
-    
-    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.LOW)
-    time.sleep(.1)
-    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.HIGH)
 
     bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
