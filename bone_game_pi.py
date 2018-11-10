@@ -66,6 +66,10 @@ class Commands(IntEnum):
     clear_strip = 2
     set_multiple_leds = 3
     reset_game = 4
+    led_test = 5
+    set_button_test_on = 6
+    set_button_test_off = 7
+    reset_teensy = 8
 
 red = [255, 0, 0]
 green = [0, 255, 0]
