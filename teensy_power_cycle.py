@@ -25,10 +25,12 @@ if __name__ == '__main__':
 
     wiringpi.wiringPiSetup()
 
-    wiringpi.pinMode(arduino_vcc_pin, wiringpi.OUTPUT)
+    # wiringpi.pinMode(arduino_vcc_pin, wiringpi.OUTPUT)
     wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
     wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
 
+    wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
+
     wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.LOW)
-    time.sleep(.1)
+    time.sleep(1)
     wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.HIGH)
