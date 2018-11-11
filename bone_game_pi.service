@@ -1,0 +1,8 @@
+[Unit]
+Description=Bone_Game_Pi
+
+[Service]
+ExecStart=/home/pi/bone_game_pi/bone_game_pi.py
+
+[Install]
+WantedBy=multi-user.target
