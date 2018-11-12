@@ -11,6 +11,7 @@ import wiringpi
 import os
 import smbus
 from enum import IntEnum
+import logging
 
 
 arduino_vcc_pin = 1
@@ -87,23 +88,25 @@ green = [0, 255, 0]
 
 
 def restart_teensy():
-    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.LOW)
+    wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
+
+    wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.LOW)
     time.sleep(1)
-    wiringpi.digitalWrite(arduino_gnd_pin. wiringpi.HIGH)
+    wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.HIGH)
 
 
 def write_data(data):
     retry_max = 10
     retry_count = 0
 
-    print( 'Write data: %s' % (data) )
+    logging.debug( 'Write data: %s' % (data) )
 
     while( retry_count < retry_max ):
         try:
             res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
             return res
         except OSError:
-            print( 'Retry: %s' % (data) )
+            logging.debug( 'Retry: %s' % (data) )
             retry_count += 1
 
 
@@ -112,14 +115,14 @@ def read_data():
     retry_max = 10
     retry_count = 0
 
-    print( 'Read Data' )
+    logging.debug( 'Read Data' )
 
     while( retry_count < retry_max ):
         try:
             res = bus.read_byte_data(DEVICE_ADDRESS, DEVICE_REG_MODE1)
             return res
         except OSError:
-            print( 'Retry Read Data' )
+            logging.debug( 'Retry Read Data' )
             retry_count += 1
 
 
@@ -154,7 +157,7 @@ def get_letter():
     button = ''
     while(button not in letter_led_map.keys()):
         button = chr(read_data())
-        print( 'Read: %s' % (str(button)))
+        logging.debug( 'Read: %s' % (str(button)))
     return button
 
 
@@ -162,20 +165,28 @@ def get_letter():
 
 # Main program logic follows:
 if __name__ == '__main__':
+    logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
+
+    logging.info("Starting Bone Game")
 
     # Process arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
 
-    print ('Press Ctrl-C to quit.')
+    logging.info ('Press Ctrl-C to quit.')
     if not args.clear:
-        print('Use "-c" argument to clear LEDs on exit')
+        logging.info('Use "-c" argument to clear LEDs on exit')
 
     wiringpi.wiringPiSetup()
 
     wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
     wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
+
+    restart_teensy()
+
+    # Ensure the teensy has time to restart
+    time.sleep(10)
 
     bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
@@ -192,12 +203,12 @@ if __name__ == '__main__':
         while 1:
             #Wait until the user chooses a bone
             selected_bone = get_letter()
-            print('Selected Bone: %s' % (selected_bone))
+            logging.debug('Selected Bone: %s' % (selected_bone))
             clear_strip_set_led(letter_led_map[selected_bone], red)
 
             #Waituntil the user chooses a bone name
             selected_bone_name = get_letter()
-            print('Selected Bone Name: %s' % (selected_bone_name))
+            logging.debug('Selected Bone Name: %s' % (selected_bone_name))
             set_led(letter_led_map[selected_bone_name], green)
             
             # time.sleep(5)
