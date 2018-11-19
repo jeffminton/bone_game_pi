@@ -22,8 +22,7 @@ heartbeat = False
 heartbeat_on_at = None
 heartbeat_off_at = None
 
-#milliseconds to wait for a second input
-GAME_TIMEOUT = 360000
+
 
 
 letter_led_map = {
@@ -128,103 +127,140 @@ green = [0, 255, 0]
 #     strip.show()
 
 
+class BoneGame():
+
+    DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
+    DEVICE_REG_MODE1 = 0x00
+    DEVICE_REG_LEDOUT0 = 0x1d
+    #milliseconds to wait for a second input
+    GAME_TIMEOUT = 360000
+
+    def __init__(self, game_heartbeat):
+        self.selections = {
+            'selected_bone': None,
+            'selected_bone_name': None        
+        }
+        self.first_choice_time = None
+
+        self.game_heartbeat = game_heartbeat
+
+        wiringpi.wiringPiSetup()
+        wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
+        wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
 
 
-def restart_teensy():
-    logging.info(restart_teensy.__name__)
-    wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
+    def set_first_choice_time(self):
+        self.first_choice_time = self.game_heartbeat.millis()
 
-    wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.LOW)
-    time.sleep(1)
-    wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.HIGH)
+    def selected_bone(self):
+        return self.selections['selected_bone']
+
+    def reset_selected_bone(self):
+        self.selections['selected_bone'] = None
+
+    def selected_bone_name(self):
+        return self.selections['selected_bone_name']
+
+    def reset_selected_bone_name(self):
+        self.selections['selected_bone_name'] = None
+
+    def restart_teensy(self):
+        logging.info(self.restart_teensy.__name__)
+        wiringpi.digitalWrite(arduino_rst_pin, wiringpi.LOW)
+
+        wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.LOW)
+        time.sleep(1)
+        wiringpi.digitalWrite(arduino_gnd_pin, wiringpi.HIGH)
 
 
-def write_data(data):
-    retry_max = 10
-    retry_count = 0
+    def write_data(self, data):
+        retry_max = 10
+        retry_count = 0
 
-    # logging.debug( 'Write data: %s' % (data) )
+        # logging.debug( 'Write data: %s' % (data) )
 
-    while( retry_count < retry_max ):
-        try:
-            res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
-            return res
-        except OSError:
-            # logging.debug( 'Retry: %s' % (data) )
-            retry_count += 1
+        while( retry_count < retry_max ):
+            try:
+                res = bus.write_block_data(BoneGame.DEVICE_ADDRESS, BoneGame.DEVICE_REG_MODE1, data)
+                return res
+            except OSError:
+                # logging.debug( 'Retry: %s' % (data) )
+                retry_count += 1
 
 
 
-def read_data():
-    retry_max = 10
-    retry_count = 0
+    def read_data(self):
+        retry_max = 10
+        retry_count = 0
 
-    bone_heartbeat.heartbeat_log( 'read_data', logging.debug )
+        bone_heartbeat.heartbeat_log( 'read_data', logging.debug )
 
-    while( retry_count < retry_max ):
-        try:
+        while( retry_count < retry_max ):
+            try:
+                bone_heartbeat.heartbeat_log( 'get_letter', logging.debug )
+                res = bus.read_byte_data(BoneGame.DEVICE_ADDRESS, BoneGame.DEVICE_REG_MODE1)
+                return res
+            except OSError:
+                bone_heartbeat.heartbeat_log( 'Retry read_data', logging.debug )
+                retry_count += 1
+
+
+
+    def clear_strip(self):
+        logging.info(self.clear_strip.__name__)
+        data = [int(Commands.clear_strip)]
+        res = self.write_data(data)
+        # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+
+    def clear_strip_set_led(self, led_num, color):
+        logging.info(self.clear_strip_set_led.__name__)
+        data = [int(Commands.clear_then_set_led)]
+        data.append(led_num)
+        data.extend(color)
+        res = self.write_data(data)
+        # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+    def set_led(self, led_num, color):
+        logging.info(self.set_led.__name__)
+        data = [int(Commands.set_led)]
+        data.append(led_num)
+        data.extend(color)
+        res = self.write_data(data)
+        # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+
+
+    def reset_game(self):
+        logging.info(self.reset_game.__name__)
+        data = [int(Commands.reset_game)]
+        res = self.write_data(data)
+        self.reset_selected_bone()
+        self.reset_selected_bone_name()
+
+
+    def get_letter(self, selection_name):
+        button = ''
+        retry_max = 10
+        retry_count = 0
+        while(button not in letter_led_map.keys() and retry_count < retry_max):
             bone_heartbeat.heartbeat_log( 'get_letter', logging.debug )
-            res = bus.read_byte_data(DEVICE_ADDRESS, DEVICE_REG_MODE1)
-            return res
-        except OSError:
-            bone_heartbeat.heartbeat_log( 'Retry read_data', logging.debug )
+            try:
+                button = chr(self.read_data())
+                bone_heartbeat.heartbeat_log( 'get_letter: %s' % (str(button)), logging.debug )
+            except TypeError:
+                button = '0'
             retry_count += 1
+        self.selections[selection_name] = button
 
 
+    def get_heartbeat(self):
 
-def clear_strip():
-    logging.info(clear_strip.__name__)
-    data = [int(Commands.clear_strip)]
-    res = write_data(data)
-    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
-
-
-def clear_strip_set_led(led_num, color):
-    logging.info(clear_strip_set_led.__name__)
-    data = [int(Commands.clear_then_set_led)]
-    data.append(led_num)
-    data.extend(color)
-    res = write_data(data)
-    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
-
-def set_led(led_num, color):
-    logging.info(set_led.__name__)
-    data = [int(Commands.set_led)]
-    data.append(led_num)
-    data.extend(color)
-    res = write_data(data)
-    # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
-
-
-def reset_game():
-    logging.info(reset_game.__name__)
-    data = [int(Commands.reset_game)]
-    res = write_data(data)
-
-
-def get_letter():
-    button = ''
-    retry_max = 10
-    retry_count = 0
-    while(button not in letter_led_map.keys() and retry_count < retry_max):
-        bone_heartbeat.heartbeat_log( 'get_letter', logging.debug )
+        data = [int(Commands.heartbeat)]
+        res = self.write_data(data)
         try:
-            button = chr(read_data())
-            bone_heartbeat.heartbeat_log( 'get_letter: %s' % (str(button)), logging.debug )
+            return chr(self.read_data())
         except TypeError:
-            button = '0'
-        retry_count += 1
-    return button
-
-
-def get_heartbeat():
-
-    data = [int(Commands.heartbeat)]
-    res = write_data(data)
-    try:
-        return chr(read_data())
-    except TypeError:
-        return '0'
+            return '0'
 
 
 
@@ -250,73 +286,68 @@ if __name__ == '__main__':
     teensy_heartbeat_missed_count = 0
     teensy_heartbeat_missed_count_max = 3
 
+    bone_game = BoneGame(bone_heartbeat)
 
-    wiringpi.wiringPiSetup()
-
-    wiringpi.pinMode(arduino_gnd_pin, wiringpi.OUTPUT)
-    wiringpi.pinMode(arduino_rst_pin, wiringpi.OUTPUT)
-
-    restart_teensy()
+    bone_game.restart_teensy()
 
     # Ensure the teensy has time to restart
     time.sleep(10)
 
     bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
 
-    DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
-    DEVICE_REG_MODE1 = 0x00
-    DEVICE_REG_LEDOUT0 = 0x1d
+    # DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
+    # DEVICE_REG_MODE1 = 0x00
+    # DEVICE_REG_LEDOUT0 = 0x1d
     
     pygame.mixer.init()
     pygame.mixer.music.load('sounds/beeps.wav')
 
-    reset_game()
+    bone_game.reset_game()
 
-    selected_bone = None
-    selected_bone_name = None
-    first_choice_time = None
+    # selected_bone = None
+    # selected_bone_name = None
+    # first_choice_time = None
 
     try:
         while 1:
             if teensy_heartbeat_last + teensy_hearbteat_durration <= bone_heartbeat.millis():
                 teensy_heartbeat_last = bone_heartbeat.millis()
-                heartbeat = get_heartbeat()
+                heartbeat = bone_game.get_heartbeat()
                 if heartbeat != '1':
                     teensy_heartbeat_missed_count += 1
                     if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
                         logging.info('NO Heartbeat returned, restarting')
-                        restart_teensy()
+                        bone_game.restart_teensy()
                         time.sleep(1)
-                        reset_game()
+                        bone_game.reset_game()
                 else:
                     logging.info('Heartbeat returned')
             #Wait until the user chooses a bone
-            if selected_bone == None:
+            if bone_game.selected_bone() == None:
                 bone_heartbeat.heartbeat_log('Waiting for bone selection', logging.debug)
-                selected_bone = get_letter()
-                if(selected_bone not in letter_led_map.keys()):
-                    selected_bone = None
-                elif(selected_bone in letter_led_map.keys()):
-                    first_choice_time = bone_heartbeat.millis()
-                    logging.debug('Selected Bone: %s' % (selected_bone))
-                    clear_strip_set_led(letter_led_map[selected_bone], red)
+                bone_game.get_letter('selected_bone')
+                if(bone_game.selected_bone() not in letter_led_map.keys()):
+                    bone_game.reset_selected_bone()
+                elif(bone_game.selected_bone() in letter_led_map.keys()):
+                    bone_game.set_first_choice_time()
+                    logging.debug('Selected Bone: %s' % (bone_game.selected_bone()))
+                    bone_game.clear_strip_set_led(letter_led_map[bone_game.selected_bone()], red)
 
             #Wait until the user chooses a bone name
-            if selected_bone != None and selected_bone_name == None:
+            if bone_game.selected_bone() != None and bone_game.selected_bone_name() == None:
                 #Check is the timeout to reset has been reached
-                if bone_heartbeat.millis() >= first_choice_time + GAME_TIMEOUT:
+                if bone_heartbeat.millis() >= bone_game.first_choice_time + bone_game.GAME_TIMEOUT:
                     logging.debug('Timeout reached. Restart Game')
-                    selected_bone = None
-                    reset_game()
+                    bone_game.reset_game()
                 bone_heartbeat.heartbeat_log('Waiting for bone name selection', logging.debug)
-                selected_bone_name = get_letter()
-                if(selected_bone_name not in letter_led_map.keys()):
-                    selected_bone_name = None
-                elif(selected_bone_name in letter_led_map.keys()):
-                    logging.debug('Selected Bone Name: %s' % (selected_bone_name))
-                    set_led(letter_led_map[selected_bone_name], green)
+                bone_game.get_letter('selected_bone_name')
+                if(bone_game.selected_bone_name() not in letter_led_map.keys()):
+                    bone_game.reset_selected_bone_name()
+                elif(bone_game.selected_bone_name() in letter_led_map.keys()):
+                    logging.debug('Selected Bone Name: %s' % (bone_game.selected_bone_name()))
+                    bone_game.set_led(letter_led_map[bone_game.selected_bone_name()], green)
             
-            if selected_bone != None and selected_bone_name != None:
+            if bone_game.selected_bone() != None and bone_game.selected_bone_name() != None:
                 # time.sleep(5)
                 logging.info('Selections chosen. play song')
                 pygame.mixer.music.play()
@@ -325,26 +356,24 @@ if __name__ == '__main__':
                 current_cue = 0
                 while pygame.mixer.music.get_busy() == True and current_cue < len(sound_cues):
                     if time.time() - start_time >= sound_cues[current_cue]:
-                        clear_strip_set_led(random.randint(0, len(letter_led_map) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.clear_strip_set_led(random.randint(0, len(letter_led_map) - 1), color_list[random.randint(0, len(color_list) - 1)])
                         current_cue += 1
 
 
-                if answer_key[selected_bone] == selected_bone_name:
-                    clear_strip_set_led(letter_led_map[selected_bone], green)
-                    set_led(letter_led_map[selected_bone_name], green)
+                if answer_key[bone_game.selected_bone()] == bone_game.selected_bone_name():
+                    bone_game.clear_strip_set_led(letter_led_map[bone_game.selected_bone()], green)
+                    bone_game.set_led(letter_led_map[bone_game.selected_bone_name()], green)
                     #Play correct sound
                 else:
-                    clear_strip_set_led(letter_led_map[selected_bone], green)
-                    set_led(letter_led_map[selected_bone_name], red)
-                    set_led(letter_led_map[answer_key[selected_bone]], green)
+                    bone_game.clear_strip_set_led(letter_led_map[bone_game.selected_bone()], green)
+                    bone_game.set_led(letter_led_map[bone_game.selected_bone_name()], red)
+                    bone_game.set_led(letter_led_map[answer_key[bone_game.selected_bone()]], green)
                     #play wrong sound
 
-                selected_bone = None
-                selected_bone_name = None
-                reset_game()
+                bone_game.reset_game()
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
         if args.clear:
-            clear_strip()
+            bone_game.clear_strip()
         pass
         # pwm.stop() # stop PWM
         # GPIO.cleanup() # cleanup all GPIO
