@@ -92,24 +92,11 @@ if __name__ == '__main__':
     teensy_heartbeat_missed_count_max = 3
 
     bone_game.restart_teensy()
-
-    # Ensure the teensy has time to restart
-    time.sleep(10)
-
-    # bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
-
-    # DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
-    # DEVICE_REG_MODE1 = 0x00
-    # DEVICE_REG_LEDOUT0 = 0x1d
     
     pygame.mixer.init()
     pygame.mixer.music.load('sounds/beeps.wav')
 
-    bone_game.reset_game()
-
-    # selected_bone = None
-    # selected_bone_name = None
-    # first_choice_time = None
+    bone_game.set_button_test_off()
 
     try:
         while 1:
@@ -134,9 +121,13 @@ if __name__ == '__main__':
                 if(bone_game.selected_bone() not in bone_game.LETTER_LED_MAP.keys()):
                     bone_game.reset_selected_bone()
                 elif(bone_game.selected_bone() in bone_game.LETTER_LED_MAP.keys()):
-                    bone_game.set_first_choice_time()
-                    logging.debug('Selected Bone: %s' % (bone_game.selected_bone()))
-                    bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], red)
+                    if(bone_game.selected_bone() in answer_key.keys()):
+                        bone_game.set_first_choice_time()
+                        logging.debug('Selected Bone: %s' % (bone_game.selected_bone()))
+                        bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], red)
+                    else:
+                        logging.debug('Did not get a propber bone selection. Selection was %s. Resetting Game' % (bone_game.selected_bone()))
+                        bone_game.reset_game()
 
             #Wait until the user chooses a bone name
             if bone_game.selected_bone() != None and bone_game.selected_bone_name() == None:

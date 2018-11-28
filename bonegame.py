@@ -13,8 +13,8 @@ class Commands(IntEnum):
     set_multiple_leds = 3
     reset_game = 4
     led_test = 5
-    set_button_test_on = 6
-    set_button_test_off = 7
+    button_test_on = 6
+    button_test_off = 7
     reset_teensy = 8
     heartbeat = 9
 
@@ -25,7 +25,7 @@ class BoneGame():
     DEVICE_REG_MODE1 = 0x00
     DEVICE_REG_LEDOUT0 = 0x1d
     #milliseconds to wait for a second input
-    GAME_TIMEOUT = 360000
+    GAME_TIMEOUT = 30000
 
     ARDUINO_VCC_PIN = 1
     ARDUINO_GND_PIN = 4
@@ -100,8 +100,11 @@ class BoneGame():
         wiringpi.digitalWrite(BoneGame.ARDUINO_RST_PIN, wiringpi.LOW)
 
         wiringpi.digitalWrite(BoneGame.ARDUINO_GND_PIN, wiringpi.LOW)
-        time.sleep(1)
+        time.sleep(.3)
         wiringpi.digitalWrite(BoneGame.ARDUINO_GND_PIN, wiringpi.HIGH)
+
+        time.sleep(.3)
+        self.reset_game()
 
 
     def write_data(self, data):
@@ -167,6 +170,19 @@ class BoneGame():
         res = self.write_data(data)
         self.reset_selected_bone()
         self.reset_selected_bone_name()
+        self.clear_button_states()
+
+
+    def set_button_test_on(self):
+        logging.info(self.set_button_test_on.__name__)
+        data = [int(Commands.button_test_on)]
+        res = self.write_data(data)
+
+
+    def set_button_test_off(self):
+        logging.info(self.set_button_test_off.__name__)
+        data = [int(Commands.button_test_off)]
+        res = self.write_data(data)
 
 
     def get_letter(self, selection_name):
@@ -196,7 +212,8 @@ class BoneGame():
                 except TypeError:
                     button = None
                 retry_count += 1
-            self.button_states[button] = True
+            if button != '0':
+                self.button_states[button] = True
 
 
     def get_heartbeat(self):
