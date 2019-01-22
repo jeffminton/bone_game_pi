@@ -17,6 +17,7 @@ class Commands(IntEnum):
     button_test_off = 7
     reset_teensy = 8
     heartbeat = 9
+    send_log = 10
 
 
 class BoneGame():
@@ -32,14 +33,14 @@ class BoneGame():
     ARDUINO_RST_PIN = 5
 
     LETTER_LED_MAP = {
-        'a': 1, 'b' : 2, 'c': 3, 'd': 4, 'e': 5, 'f': 6,
-        'g': 7, 'h' : 8, 'i': 9, 'j': 10, 'k': 11, 'l': 12,
-        'm': 13, 'n' : 14, 'o': 15, 'p': 16, 'q': 17, 'r': 18,
-        's': 19, 't' : 20, 'u': 21, 'v': 22, 'w': 23, 'x': 24,
-        'A': 25, 'B' : 26, 'C': 27, 'D': 28, 'E': 29, 'F': 30,
-        'G': 31, 'H' : 32, 'I': 33, 'J': 34, 'K': 35, 'L': 36,
-        'M': 37, 'N' : 38, 'O': 39, 'P': 40, 'Q': 41, 'R': 42,
-        'S': 43, 'T' : 44, 'U': 45, 'V': 46, 'W': 47, 'X': 48
+        'a': 0, 'b' : 1, 'c': 2, 'd': 3, 'e': 4, 'f': 5,
+        'g': 6, 'h' : 7, 'i': 8, 'j': 9, 'k': 10, 'l': 11,
+        'm': 12, 'n' : 13, 'o': 14, 'p': 15, 'q': 16, 'r': 17,
+        's': 18, 't' : 19, 'u': 20, 'v': 21, 'w': 22, 'x': 23,
+        'A': 24, 'B' : 25, 'C': 26, 'D': 27, 'E': 28, 'F': 29,
+        'G': 30, 'H' : 31, 'I': 32, 'J': 33, 'K': 34, 'L': 35,
+        'M': 36, 'N' : 37, 'O': 38, 'P': 39, 'Q': 40, 'R': 41,
+        'S': 42, 'T' : 43, 'U': 44, 'V': 45, 'W': 46, 'X': 47
     }
 
     def __init__(self):
@@ -54,6 +55,7 @@ class BoneGame():
             'selected_bone_name': None        
         }
         self.first_choice_time = None
+        self.led_off = [0, 0, 0]
 
         # self.game_heartbeat = game_heartbeat
 
@@ -68,10 +70,27 @@ class BoneGame():
             'S': False, 'T' : False, 'U': False, 'V': False, 'W': False, 'X': False
         }
 
+        self.led_states = [self.led_off] * 48
+        # {
+        #     'a': False, 'b' : False, 'c': False, 'd': False, 'e': False, 'f': False,
+        #     'g': False, 'h' : False, 'i': False, 'j': False, 'k': False, 'l': False,
+        #     'm': False, 'n' : False, 'o': False, 'p': False, 'q': False, 'r': False,
+        #     's': False, 't' : False, 'u': False, 'v': False, 'w': False, 'x': False,
+        #     'A': False, 'B' : False, 'C': False, 'D': False, 'E': False, 'F': False,
+        #     'G': False, 'H' : False, 'I': False, 'J': False, 'K': False, 'L': False,
+        #     'M': False, 'N' : False, 'O': False, 'P': False, 'Q': False, 'R': False,
+        #     'S': False, 'T' : False, 'U': False, 'V': False, 'W': False, 'X': False
+        # }
+
         wiringpi.wiringPiSetup()
         wiringpi.pinMode(BoneGame.ARDUINO_GND_PIN, wiringpi.OUTPUT)
         wiringpi.pinMode(BoneGame.ARDUINO_RST_PIN, wiringpi.OUTPUT)
 
+    def colors_equal(self, color_1, color_2):
+        for i in range(len(color_1)):
+            if color_1[i] != color_2[i]:
+                return False
+        return True
 
     def get_button_states(self):
         return self.button_states
@@ -79,6 +98,12 @@ class BoneGame():
     def clear_button_states(self):
         for key in self.button_states.keys():
             self.button_states[key] = False
+
+    def set_led_state(self, led_num, color):
+        self.led_states[led_num] = color
+
+    def clear_led_states(self):
+        self.led_states = [self.led_off] * 48
 
     def set_first_choice_time(self):
         self.first_choice_time = self.millis()
@@ -142,6 +167,7 @@ class BoneGame():
 
     def clear_strip(self):
         logging.info(self.clear_strip.__name__)
+        self.clear_led_states()
         data = [int(Commands.clear_strip)]
         res = self.write_data(data)
         # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
@@ -149,19 +175,23 @@ class BoneGame():
 
     def clear_strip_set_led(self, led_num, color):
         logging.info(self.clear_strip_set_led.__name__)
+        self.clear_led_states()
         data = [int(Commands.clear_then_set_led)]
         data.append(led_num)
         data.extend(color)
         res = self.write_data(data)
+        self.set_led_state(led_num, color)
         # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
 
     def set_led(self, led_num, color):
-        logging.info(self.set_led.__name__)
-        data = [int(Commands.set_led)]
-        data.append(led_num)
-        data.extend(color)
-        res = self.write_data(data)
-        # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+        if not self.colors_equal(self.led_states[led_num], color):
+            logging.info('%s: %d' % (self.set_led.__name__, led_num))
+            data = [int(Commands.set_led)]
+            data.append(led_num)
+            data.extend(color)
+            res = self.write_data(data)
+            self.set_led_state(led_num, color)
+            # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
 
 
     def reset_game(self):
@@ -185,6 +215,12 @@ class BoneGame():
         res = self.write_data(data)
 
 
+    def run_led_test(self):
+        logging.info(self.set_button_test_off.__name__)
+        data = [int(Commands.led_test)]
+        res = self.write_data(data)
+
+
     def get_letter(self, selection_name):
         button = None
         retry_max = 10
@@ -203,16 +239,19 @@ class BoneGame():
         button = ''
         retry_max = 10
         retry_count = 0
-        while(button != '0'):
-            while((button not in BoneGame.LETTER_LED_MAP.keys() or button != '0') and retry_count < retry_max):
+        while(button != '\0'):
+            button = ''
+            while(button not in BoneGame.LETTER_LED_MAP.keys() and button != '\0' and retry_count < retry_max):
                 self.heartbeat_log( 'get_buttons', logging.debug )
                 try:
                     button = chr(self.read_data())
                     self.heartbeat_log( 'get_buttons: %s' % (str(button)), logging.debug )
                 except TypeError:
+                    logging.debug('get_buttons execption')
                     button = None
                 retry_count += 1
-            if button != '0':
+            if button != '\0':
+                self.heartbeat_log('sett button %s true' % (str(button)), logging.debug)
                 self.button_states[button] = True
 
 
@@ -223,14 +262,16 @@ class BoneGame():
         try:
             return chr(self.read_data())
         except TypeError:
-            return '0'
+            return '-1'
 
 
     def millis(self):
         return int(round(time.time() * 1000))
 
-    def heartbeat_log(self, log_msg, debug_level):
+    def heartbeat_log(self, log_msg, debug_level, force = False):
         # debug_level('millis: %s, on at: %s, off at: %s' % (str(self.millis()), str(self.heartbeat_on_at), str(self.heartbeat_off_at)))
+        if force == True:
+            debug_level(log_msg)
         if self.heartbeat_on_at == None:
             debug_level('Heartbeat is None')
             self.heartbeat_on_at = self.millis() + self.heartbeat_interval

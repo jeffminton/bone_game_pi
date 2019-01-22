@@ -13,6 +13,7 @@ import smbus
 from enum import IntEnum
 import logging
 from bonegame import BoneGame
+import pprint
 
 # arduino_vcc_pin = 1
 # arduino_gnd_pin = 4
@@ -74,16 +75,19 @@ green = [0, 255, 0]
 if __name__ == '__main__':
     logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/button_test.log',level=logging.DEBUG)
 
-    logging.info("Starting Bone Game")
+    print("Starting Button Test")
+    logging.info("Starting Button Test")
 
     # Process arguments
     parser = argparse.ArgumentParser()
-    parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
-    args = parser.parse_args()
+    # parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
+    # args = parser.parse_args()
 
-    logging.info ('Press Ctrl-C to quit.')
-    if not args.clear:
-        logging.info('Use "-c" argument to clear LEDs on exit')
+    # print ('Press Ctrl-C to quit.')
+    # logging.info ('Press Ctrl-C to quit.')
+    # if not args.clear:
+    #     print('Use "-c" argument to clear LEDs on exit')
+    #     logging.info('Use "-c" argument to clear LEDs on exit')
 
     bone_game = BoneGame()
 
@@ -95,24 +99,12 @@ if __name__ == '__main__':
 
     bone_game.restart_teensy()
 
-    # Ensure the teensy has time to restart
-    time.sleep(10)
+    bone_game.run_led_test()
 
-    bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
-
-    # DEVICE_ADDRESS = 0x08      #7 bit address (will be left shifted to add the read write bit)
-    # DEVICE_REG_MODE1 = 0x00
-    # DEVICE_REG_LEDOUT0 = 0x1d
-    
-    pygame.mixer.init()
-    pygame.mixer.music.load('sounds/beeps.wav')
+    time.sleep(5)
 
     bone_game.reset_game()
-
-    # selected_bone = None
-    # selected_bone_name = None
-    # first_choice_time = None
-
+    
     bone_game.set_button_test_on()
 
     try:
@@ -120,6 +112,7 @@ if __name__ == '__main__':
             if teensy_heartbeat_last + teensy_hearbteat_durration <= bone_game.millis():
                 teensy_heartbeat_last = bone_game.millis()
                 heartbeat = bone_game.get_heartbeat()
+                logging.info('heartbeat returned value: %s' % (heartbeat))
                 if heartbeat != '1':
                     teensy_heartbeat_missed_count += 1
                     if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
@@ -127,31 +120,17 @@ if __name__ == '__main__':
                         bone_game.restart_teensy()
                         time.sleep(1)
                         bone_game.reset_game()
+                        bone_game.set_button_test_on()
                 else:
                     logging.info('Heartbeat returned')
-            # #Wait until the user chooses a bone
-            # if bone_game.selected_bone() == None:
-            #     bone_game.heartbeat_log('Waiting for bone selection', logging.debug)
-            #     bone_game.get_letter('selected_bone')
-            #     if(bone_game.selected_bone() not in letter_led_map.keys()):
-            #         bone_game.reset_selected_bone()
-            #     elif(bone_game.selected_bone() in letter_led_map.keys()):
-            #         bone_game.set_first_choice_time()
-            #         logging.debug('Selected Bone: %s' % (bone_game.selected_bone()))
-            #         bone_game.clear_strip_set_led(letter_led_map[bone_game.selected_bone()], red)
-
             bone_game.get_buttons()
-            logging.debug('Buttons: %s' % (str(bone_game.get_button_states())))
             for key in bone_game.get_button_states().keys():
-                logging.debug('Key: %s' % (str(key)))
                 if bone_game.get_button_states()[key] == True:
-                    bone_game.set_led(BoneGame.LETTER_LED_MAP[bone_game.get_button_states()[key]], red)
+                    bone_game.heartbeat_log('Key: %s' % (str(key)), logging.debug, True)
+                    bone_game.set_led(BoneGame.LETTER_LED_MAP[key], red)
 
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
-        if args.clear:
-            bone_game.clear_strip()
+        bone_game.clear_strip()
         bone_game.set_button_test_off()
         pass
-        # pwm.stop() # stop PWM
-        # GPIO.cleanup() # cleanup all GPIO
 
