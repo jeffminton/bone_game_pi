@@ -12,7 +12,7 @@ import os
 import smbus
 from enum import IntEnum
 import logging
-from bonegame import BoneGame
+from bonegame import BoneGame, Heartbeat
 
 
 heartbeat = False
@@ -48,17 +48,17 @@ color_list = [
 ]
 
 
-class Commands(IntEnum):
-    set_led = 0
-    clear_then_set_led = 1
-    clear_strip = 2
-    set_multiple_leds = 3
-    reset_game = 4
-    led_test = 5
-    set_button_test_on = 6
-    set_button_test_off = 7
-    reset_teensy = 8
-    heartbeat = 9
+# class Commands(IntEnum):
+#     set_led = 0
+#     clear_then_set_led = 1
+#     clear_strip = 2
+#     set_multiple_leds = 3
+#     reset_game = 4
+#     led_test = 5
+#     set_button_test_on = 6
+#     set_button_test_off = 7
+#     reset_teensy = 8
+#     heartbeat = 9
 
 
 
@@ -85,13 +85,19 @@ if __name__ == '__main__':
 
     bone_game = BoneGame()
 
-    teensy_heartbeat = False
-    teensy_hearbteat_durration = 10000
-    teensy_heartbeat_last = bone_game.millis()
-    teensy_heartbeat_missed_count = 0
-    teensy_heartbeat_missed_count_max = 3
+    # teensy_heartbeat = False
+    # teensy_hearbteat_durration = 10000
+    # teensy_heartbeat_last = bone_game.millis()
+    # teensy_heartbeat_missed_count = 0
+    # teensy_heartbeat_missed_count_max = 3
 
-    bone_game.restart_teensy()
+    heartbeat = Heartbeat(bone_game, durration = 10000, missed_count_max = 3)
+
+    bone_game.run_led_test()
+
+    time.sleep(5)
+
+    bone_game.reset_game()
     
     pygame.mixer.init()
     pygame.mixer.music.load('sounds/beeps.wav')
@@ -100,21 +106,22 @@ if __name__ == '__main__':
 
     try:
         while 1:
-            if teensy_heartbeat_last + teensy_hearbteat_durration <= bone_game.millis():
-                teensy_heartbeat_last = bone_game.millis()
-                heartbeat = bone_game.get_heartbeat()
-                if heartbeat != '1':
-                    teensy_heartbeat_missed_count += 1
-                    logging.info('NO Heartbeat returned, Fail count %d' % (teensy_heartbeat_missed_count))
-                    if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
-                        logging.info('NO Heartbeat returned, restarting')
-                        bone_game.restart_teensy()
-                        time.sleep(1)
-                        bone_game.reset_game()
-                        teensy_heartbeat_missed_count = 0
-                else:
-                    logging.info('Heartbeat returned')
+            # if teensy_heartbeat_last + teensy_hearbteat_durration <= bone_game.millis():
+            #     teensy_heartbeat_last = bone_game.millis()
+            #     heartbeat = bone_game.get_heartbeat()
+            #     if heartbeat != '1':
+            #         teensy_heartbeat_missed_count += 1
+            #         logging.info('NO Heartbeat returned, Fail count %d' % (teensy_heartbeat_missed_count))
+            #         if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
+            #             logging.info('NO Heartbeat returned, restarting')
+            #             bone_game.restart_teensy()
+            #             time.sleep(1)
+            #             bone_game.reset_game()
+            #             teensy_heartbeat_missed_count = 0
+            #     else:
+            #         logging.info('Heartbeat returned')
             #Wait until the user chooses a bone
+            heartbeat.get_heartbeat()
             if bone_game.selected_bone() == None:
                 bone_game.heartbeat_log('Waiting for bone selection', logging.debug)
                 bone_game.get_letter('selected_bone')

@@ -12,7 +12,7 @@ import os
 import smbus
 from enum import IntEnum
 import logging
-from bonegame import BoneGame
+from bonegame import BoneGame, Heartbeat
 import pprint
 
 # arduino_vcc_pin = 1
@@ -89,13 +89,9 @@ if __name__ == '__main__':
     #     print('Use "-c" argument to clear LEDs on exit')
     #     logging.info('Use "-c" argument to clear LEDs on exit')
 
-    bone_game = BoneGame()
+    bone_game = BoneGame(debug = False)
 
-    teensy_heartbeat = False
-    teensy_hearbteat_durration = 10000
-    teensy_heartbeat_last = bone_game.millis()
-    teensy_heartbeat_missed_count = 0
-    teensy_heartbeat_missed_count_max = 3
+    heartbeat = Heartbeat(bone_game, durration = 10000, missed_count_max = 3)
 
     bone_game.restart_teensy()
 
@@ -109,28 +105,15 @@ if __name__ == '__main__':
 
     try:
         while 1:
-            if teensy_heartbeat_last + teensy_hearbteat_durration <= bone_game.millis():
-                teensy_heartbeat_last = bone_game.millis()
-                heartbeat = bone_game.get_heartbeat()
-                logging.info('heartbeat returned value: %s' % (heartbeat))
-                if heartbeat != '1':
-                    teensy_heartbeat_missed_count += 1
-                    if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
-                        logging.info('NO Heartbeat returned, restarting')
-                        bone_game.restart_teensy()
-                        time.sleep(1)
-                        bone_game.reset_game()
-                        bone_game.set_button_test_on()
-                else:
-                    logging.info('Heartbeat returned')
-            bone_game.get_buttons()
-            for key in bone_game.get_button_states().keys():
-                if bone_game.get_button_states()[key] == True:
-                    bone_game.heartbeat_log('Key: %s' % (str(key)), logging.debug, True)
-                    bone_game.set_led(BoneGame.LETTER_LED_MAP[key], red)
+            result = heartbeat.get_heartbeat()
+            if result == -1:
+                bone_game.set_button_test_on()
+            letter = bone_game.get_letter_test()
+            if letter in bone_game.get_button_states().keys() and bone_game.get_button_states()[letter] == True:
+                bone_game.heartbeat_log('Key: %s' % (str(letter)), logging.debug, True)
+                bone_game.set_led(BoneGame.LETTER_LED_MAP[letter], red)
 
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
-        bone_game.clear_strip()
-        bone_game.set_button_test_off()
+        bone_game.reset_game()
         pass
 
