@@ -73,6 +73,7 @@ class BoneGame():
         }
         self.first_choice_time = None
         self.led_off = [0, 0, 0]
+        self.button_test = False
 
         # self.game_heartbeat = game_heartbeat
 
@@ -140,7 +141,7 @@ class BoneGame():
 
     def restart_teensy(self):
         logging.info(self.restart_teensy.__name__)
-        wiringpi.digitalWrite(BoneGame.ARDUINO_RST_PIN, wiringpi.LOW)
+        # wiringpi.digitalWrite(BoneGame.ARDUINO_RST_PIN, wiringpi.LOW)
 
         wiringpi.digitalWrite(BoneGame.ARDUINO_GND_PIN, wiringpi.LOW)
         time.sleep(.3)
@@ -238,12 +239,14 @@ class BoneGame():
 
 
     def set_button_test_on(self):
+        self.button_test = True
         logging.info(self.set_button_test_on.__name__)
         data = [int(Commands.button_test_on)]
         res = self.write_data(data)
 
 
     def set_button_test_off(self):
+        self.button_test = False
         logging.info(self.set_button_test_off.__name__)
         data = [int(Commands.button_test_off)]
         res = self.write_data(data)
@@ -321,9 +324,9 @@ class BoneGame():
         data = [int(Commands.heartbeat)]
         res = self.write_data(data)
         try:
-            return chr(self.read_data())
+            return self.read_data()
         except TypeError:
-            return '-2'
+            return -2
 
 
     def millis(self):
@@ -386,8 +389,13 @@ class Heartbeat():
             self.heartbeat = self.bone_game.get_heartbeat()
             try:
                 logging.info('heartbeat returned value: %s' % (HeartbeatMessages(self.heartbeat)))
+                if HeartbeatMessages(self.heartbeat) == HeartbeatMessages.waiting_for_test_choice and self.bone_game.button_test == False:
+                    self.bone_game.restart_teensy()
+                    time.sleep(1)
+                    self.bone_game.reset_game()
+                    self.teensy_heartbeat_missed_count = 0
             except ValueError as e:
-                logging.info('Heartbeat returned value: %s' % (str(self.heartbeat)))
+                logging.info('Exception: Heartbeat returned value: %s' % (str(self.heartbeat)))
                 self.heartbeat = -1
             if self.heartbeat == -1:
                 self.teensy_heartbeat_missed_count += 1
