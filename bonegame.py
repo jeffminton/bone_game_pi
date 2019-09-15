@@ -140,7 +140,7 @@ class BoneGame():
         self.selections['selected_bone_name'] = None
 
     def restart_teensy(self):
-        logging.info(self.restart_teensy.__name__)
+        logging.info('FUNC CALL: ' + self.restart_teensy.__name__)
         # wiringpi.digitalWrite(BoneGame.ARDUINO_RST_PIN, wiringpi.LOW)
 
         wiringpi.digitalWrite(BoneGame.ARDUINO_GND_PIN, wiringpi.LOW)
@@ -201,7 +201,7 @@ class BoneGame():
 
 
     def clear_strip(self):
-        logging.info(self.clear_strip.__name__)
+        logging.info('FUNC CALL: ' + self.clear_strip.__name__)
         self.clear_led_states()
         data = [int(Commands.clear_strip)]
         res = self.write_data(data)
@@ -209,7 +209,7 @@ class BoneGame():
 
 
     def clear_strip_set_led(self, led_num, color):
-        logging.info(self.clear_strip_set_led.__name__)
+        logging.info('FUNC CALL: ' + self.clear_strip_set_led.__name__)
         self.clear_led_states()
         data = [int(Commands.clear_then_set_led)]
         data.append(led_num)
@@ -230,7 +230,7 @@ class BoneGame():
 
 
     def reset_game(self):
-        logging.info(self.reset_game.__name__)
+        logging.info('FUNC CALL: ' + self.reset_game.__name__)
         data = [int(Commands.reset_game)]
         res = self.write_data(data)
         self.reset_selected_bone()
@@ -240,20 +240,20 @@ class BoneGame():
 
     def set_button_test_on(self):
         self.button_test = True
-        logging.info(self.set_button_test_on.__name__)
+        logging.info('FUNC CALL: ' + self.set_button_test_on.__name__)
         data = [int(Commands.button_test_on)]
         res = self.write_data(data)
 
 
     def set_button_test_off(self):
         self.button_test = False
-        logging.info(self.set_button_test_off.__name__)
+        logging.info('FUNC CALL: ' + self.set_button_test_off.__name__)
         data = [int(Commands.button_test_off)]
         res = self.write_data(data)
 
 
     def run_led_test(self):
-        logging.info(self.set_button_test_off.__name__)
+        logging.info('FUNC CALL: ' + self.run_led_test.__name__)
         data = [int(Commands.led_test)]
         res = self.write_data(data)
 
@@ -357,7 +357,7 @@ class BoneGame():
 
     def get_device_logs(self, debug_level):
         data = [int(Commands.send_log)]
-        res = self.write_data(data)
+        #res = self.write_data(data)
         try:
             log_data = None
             while log_data == None or log_data[32] != '0':
@@ -379,8 +379,20 @@ class Heartbeat():
         self.teensy_heartbeat_last = self.bone_game.millis()
         self.teensy_heartbeat_missed_count = 0
         self.teensy_heartbeat_missed_count_max = 3
+        self.teensy_heartbeat_last_response = -1
+        self.teensy_heartbeat_same_response_count = 0
+        self.teensy_heartbeat_same_response_count_max = 3
         self.heartbeat = -1
         logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
+
+
+    def heartbeat_fail_reset(self):
+        self.bone_game.restart_teensy()
+        time.sleep(1)
+        self.bone_game.reset_game()
+        self.teensy_heartbeat_missed_count = 0
+        self.teensy_heartbeat_same_response_count = 0
+
 
     def get_heartbeat(self): 
         ret = 0   
@@ -388,12 +400,20 @@ class Heartbeat():
             self.teensy_heartbeat_last = self.bone_game.millis()
             self.heartbeat = self.bone_game.get_heartbeat()
             try:
+                logging.info('heartbeat returned RAW value: %s' % (str(self.heartbeat)))
                 logging.info('heartbeat returned value: %s' % (HeartbeatMessages(self.heartbeat)))
                 if HeartbeatMessages(self.heartbeat) == HeartbeatMessages.waiting_for_test_choice and self.bone_game.button_test == False:
-                    self.bone_game.restart_teensy()
-                    time.sleep(1)
-                    self.bone_game.reset_game()
-                    self.teensy_heartbeat_missed_count = 0
+                    self.heartbeat_fail_reset()
+                elif self.heartbeat == self.teensy_heartbeat_last_response:
+                    self.teensy_heartbeat_same_response_count += 1
+                    logging.info('Same Heartbeat returned, count %d' % (self.teensy_heartbeat_same_response_count))
+                    if self.teensy_heartbeat_same_response_count > self.teensy_heartbeat_same_response_count_max:
+                        logging.info('Same Heartbeat returned, restarting')
+                        self.heartbeat_fail_reset()
+                else:
+                    self.teensy_heartbeat_last_response = self.heartbeat
+                    self.teensy_heartbeat_same_response_count = 0
+
             except ValueError as e:
                 logging.info('Exception: Heartbeat returned value: %s' % (str(self.heartbeat)))
                 self.heartbeat = -1
@@ -402,10 +422,7 @@ class Heartbeat():
                 logging.info('NO Heartbeat returned, Fail count %d' % (self.teensy_heartbeat_missed_count))
                 if self.teensy_heartbeat_missed_count > self.teensy_heartbeat_missed_count_max:
                     logging.info('NO Heartbeat returned, restarting')
-                    self.bone_game.restart_teensy()
-                    time.sleep(1)
-                    self.bone_game.reset_game()
-                    self.teensy_heartbeat_missed_count = 0
+                    self.heartbeat_fail_reset()
                     ret = -1
             else:
                 logging.info('Heartbeat returned')

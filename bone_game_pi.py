@@ -85,6 +85,8 @@ if __name__ == '__main__':
 
     bone_game = BoneGame()
 
+    bone_game.restart_teensy()
+
     # teensy_heartbeat = False
     # teensy_hearbteat_durration = 10000
     # teensy_heartbeat_last = bone_game.millis()
@@ -100,7 +102,7 @@ if __name__ == '__main__':
     bone_game.reset_game()
     
     pygame.mixer.init()
-    pygame.mixer.music.load('sounds/beeps.wav')
+    
 
     bone_game.set_button_test_off()
 
@@ -170,6 +172,7 @@ if __name__ == '__main__':
                 # time.sleep(5)
                 # Play the "Thinking" music
                 logging.info('Selections chosen. play song')
+                pygame.mixer.music.load('sounds/beeps.wav')
                 pygame.mixer.music.play()
 
                 start_time = time.time()
@@ -188,6 +191,8 @@ if __name__ == '__main__':
                     # Set the bone name led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], green)
                     #Play correct sound
+                    pygame.mixer.music.load('sounds/correct.wav')
+                    pygame.mixer.music.play()
                 else:
                     # Set the bone led to green
                     bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
@@ -196,6 +201,8 @@ if __name__ == '__main__':
                     # Set the correct bone name led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[answer_key[bone_game.selected_bone()]], green)
                     #play wrong sound
+                    pygame.mixer.music.load('sounds/wrong.wav')
+                    pygame.mixer.music.play()
 
                 bone_game.reset_game()
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
