@@ -21,11 +21,19 @@ heartbeat_off_at = None
 
 
 
+# answer_key = {
+#     'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E', 'f': 'F',
+#     'g': 'G', 'h': 'H', 'i': 'I', 'j': 'J', 'k': 'K', 'l': 'L',
+#     'm': 'M', 'n': 'N', 'o': 'O', 'p': 'P', 'q': 'Q', 'r': 'R',
+#     's': 'S', 't': 'T', 'u': 'U', 'v': 'V', 'w': 'W', 'x': 'X'
+# }
+
+
 answer_key = {
-    'a': 'A', 'b': 'B', 'c': 'C', 'd': 'D', 'e': 'E', 'f': 'F',
-    'g': 'G', 'h': 'H', 'i': 'I', 'j': 'J', 'k': 'K', 'l': 'L',
-    'm': 'M', 'n': 'N', 'o': 'O', 'p': 'P', 'q': 'Q', 'r': 'R',
-    's': 'S', 't': 'T', 'u': 'U', 'v': 'V', 'w': 'W', 'x': 'X'
+    'g': 'T', 'o': 'G', 'w': 'A', 'c': 'S', 'k': 'J', 's': 'W', 
+    'h': 'L', 'p': 'V', 'x': 'F', 'd': 'P', 'l': 'C', 't': 'Q',
+    'e': 'X', 'm': 'E', 'u': 'K', 'a': 'O', 'i': 'I', 'q': 'N',
+    'f': 'H', 'n': 'M', 'v': 'D', 'r': 'B', 'j': 'V', 'b': 'R'
 }
 
 
@@ -169,7 +177,7 @@ if __name__ == '__main__':
             
             # If both the bone and bone name are selected
             if bone_game.selected_bone() != None and bone_game.selected_bone_name() != None:
-                # time.sleep(5)
+                time.sleep(5)
                 # Play the "Thinking" music
                 logging.info('Selections chosen. play song')
                 pygame.mixer.music.load('sounds/beeps.wav')
@@ -181,21 +189,30 @@ if __name__ == '__main__':
                 while pygame.mixer.music.get_busy() == True and current_cue < len(sound_cues):
                     if time.time() - start_time >= sound_cues[current_cue]:
                         bone_game.clear_strip_set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
+                        bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
                         current_cue += 1
 
                 # Check if the bone name is correct for the selected bone
                 if answer_key[bone_game.selected_bone()] == bone_game.selected_bone_name():
+                    bone_game.clear_strip_set_led(bone_game.CORRECT, green)
                     # The bone and bone name match
                     # Set the bone led to green
-                    bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
+                    bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
                     # Set the bone name led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], green)
                     #Play correct sound
                     pygame.mixer.music.load('sounds/correct.wav')
                     pygame.mixer.music.play()
                 else:
+                    bone_game.clear_strip_set_led(bone_game.INCORRECT, red)
                     # Set the bone led to green
-                    bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
+                    bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
                     # Set the selected bone name led to red
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], red)
                     # Set the correct bone name led to green
