@@ -177,7 +177,7 @@ if __name__ == '__main__':
             
             # If both the bone and bone name are selected
             if bone_game.selected_bone() != None and bone_game.selected_bone_name() != None:
-                time.sleep(5)
+                time.sleep(3)
                 # Play the "Thinking" music
                 logging.info('Selections chosen. play song')
                 pygame.mixer.music.load('sounds/beeps.wav')
@@ -211,6 +211,11 @@ if __name__ == '__main__':
                     #Play correct sound
                     pygame.mixer.music.load('sounds/correct.wav')
                     pygame.mixer.music.play()
+                    while pygame.mixer.music.get_busy() == True:
+                        pass
+                    # pygame.mixer.music.play()
+                    # while pygame.mixer.music.get_busy() == True:
+                    #     pass
                 else:
                     logging.info('INCORRECT')
                     bone_game.clear_strip_set_led(bone_game.INCORRECT, red)
@@ -223,6 +228,11 @@ if __name__ == '__main__':
                     #play wrong sound
                     pygame.mixer.music.load('sounds/wrong.wav')
                     pygame.mixer.music.play()
+                    while pygame.mixer.music.get_busy() == True:
+                        pass
+
+                # Delay after showing corret/incorrect
+                time.sleep(3)
 
                 bone_game.reset_game()
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:
