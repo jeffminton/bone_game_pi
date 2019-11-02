@@ -88,6 +88,7 @@ class BoneGame():
         self.first_choice_time = None
         self.led_off = [0, 0, 0]
         self.button_test = False
+        self.led_count = 50
 
         # self.game_heartbeat = game_heartbeat
 
@@ -102,7 +103,7 @@ class BoneGame():
             'S': False, 'T' : False, 'U': False, 'V': False, 'W': False, 'X': False
         }
 
-        self.led_states = [self.led_off] * 48
+        self.led_states = [self.led_off] * self.led_count
         # {
         #     'a': False, 'b' : False, 'c': False, 'd': False, 'e': False, 'f': False,
         #     'g': False, 'h' : False, 'i': False, 'j': False, 'k': False, 'l': False,
