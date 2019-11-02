@@ -13,6 +13,8 @@ import smbus
 from enum import IntEnum
 import logging
 from bonegame import BoneGame, Heartbeat
+from bonegamekey import BoneGameKey
+
 
 
 heartbeat = False
@@ -93,6 +95,8 @@ if __name__ == '__main__':
 
     bone_game = BoneGame()
 
+    bone_game_key = BoneGameKey()
+
     bone_game.restart_teensy()
 
     # teensy_heartbeat = False
@@ -142,7 +146,7 @@ if __name__ == '__main__':
                     bone_game.reset_selected_bone()
                 elif(bone_game.selected_bone() in bone_game.LETTER_LED_MAP.keys()):
                     # Bone is in the LETTER_LED_MAP
-                    if(bone_game.selected_bone() in answer_key.keys()):
+                    if(bone_game.selected_bone() in bone_game_key.ANSWER_KEY.keys()):
                         # Bone is a key in the answer key
                         # Set the time the first choice was made to be used for 
                         # resetting if no name selected in timeout time
@@ -200,7 +204,7 @@ if __name__ == '__main__':
 
                 logging.info('Song done. Set correct/incorrect')
                 # Check if the bone name is correct for the selected bone
-                if answer_key[bone_game.selected_bone()] == bone_game.selected_bone_name():
+                if bone_game_key.ANSWER_KEY[bone_game.selected_bone()] == bone_game.selected_bone_name():
                     logging.info('CORRECT')
                     bone_game.clear_strip_set_led(bone_game.CORRECT, green)
                     # The bone and bone name match
@@ -224,7 +228,7 @@ if __name__ == '__main__':
                     # Set the selected bone name led to red
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], red)
                     # Set the correct bone name led to green
-                    bone_game.set_led(bone_game.LETTER_LED_MAP[answer_key[bone_game.selected_bone()]], green)
+                    bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game_key.ANSWER_KEY[bone_game.selected_bone()]], green)
                     #play wrong sound
                     pygame.mixer.music.load('sounds/wrong.wav')
                     pygame.mixer.music.play()
