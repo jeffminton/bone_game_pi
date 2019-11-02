@@ -223,7 +223,7 @@ class BoneGame():
 
 
     def clear_strip_set_led(self, led_num, color):
-        logging.info('FUNC CALL: ' + self.clear_strip_set_led.__name__)
+        logging.info('FUNC CALL: ' + self.clear_strip_set_led.__name__ + ': ' + str(led_num))
         self.clear_led_states()
         data = [int(Commands.clear_then_set_led)]
         data.append(led_num)
@@ -233,8 +233,8 @@ class BoneGame():
         # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
 
     def set_led(self, led_num, color):
+        logging.info('FUNC CALL: ' + self.set_led.__name__ + ': ' + str(led_num))
         if not self.colors_equal(self.led_states[led_num], color):
-            logging.info('%s: %d' % (self.set_led.__name__, led_num))
             data = [int(Commands.set_led)]
             data.append(led_num)
             data.extend(color)

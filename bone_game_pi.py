@@ -198,8 +198,10 @@ if __name__ == '__main__':
                         bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), color_list[random.randint(0, len(color_list) - 1)])
                         current_cue += 1
 
+                logging.info('Song done. Set correct/incorrect')
                 # Check if the bone name is correct for the selected bone
                 if answer_key[bone_game.selected_bone()] == bone_game.selected_bone_name():
+                    logging.info('CORRECT')
                     bone_game.clear_strip_set_led(bone_game.CORRECT, green)
                     # The bone and bone name match
                     # Set the bone led to green
@@ -210,6 +212,7 @@ if __name__ == '__main__':
                     pygame.mixer.music.load('sounds/correct.wav')
                     pygame.mixer.music.play()
                 else:
+                    logging.info('INCORRECT')
                     bone_game.clear_strip_set_led(bone_game.INCORRECT, red)
                     # Set the bone led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
