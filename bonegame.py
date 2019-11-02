@@ -137,7 +137,7 @@ class BoneGame():
         self.led_states[led_num] = color
 
     def clear_led_states(self):
-        self.led_states = [self.led_off] * 48
+        self.led_states = [self.led_off] * self.led_count
 
     def set_first_choice_time(self):
         self.first_choice_time = self.millis()
