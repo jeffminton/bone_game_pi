@@ -213,7 +213,7 @@ if __name__ == '__main__':
                     # Set the bone name led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], green)
                     #Play correct sound
-                    pygame.mixer.music.load('sounds/correct.wav')
+                    pygame.mixer.music.load('sounds/correct_clapping.wav')
                     pygame.mixer.music.play()
                     while pygame.mixer.music.get_busy() == True:
                         pass
