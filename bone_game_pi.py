@@ -219,6 +219,9 @@ if __name__ == '__main__':
                     pygame.mixer.music.play(1)
                     while pygame.mixer.music.get_busy() == True:
                         pass
+                    pygame.mixer.music.play(1)
+                    while pygame.mixer.music.get_busy() == True:
+                        pass
                     
                 else:
                     logging.info('INCORRECT')
@@ -231,6 +234,9 @@ if __name__ == '__main__':
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game_key.ANSWER_KEY[bone_game.selected_bone()]], green)
                     #play wrong sound
                     pygame.mixer.music.load('sounds/wrong.wav')
+                    pygame.mixer.music.play(1)
+                    while pygame.mixer.music.get_busy() == True:
+                        pass
                     pygame.mixer.music.play(1)
                     while pygame.mixer.music.get_busy() == True:
                         pass
