@@ -216,12 +216,10 @@ if __name__ == '__main__':
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], green)
                     #Play correct sound
                     pygame.mixer.music.load('sounds/correct_clapping.wav')
-                    pygame.mixer.music.play()
+                    pygame.mixer.music.play(loops=1)
                     while pygame.mixer.music.get_busy() == True:
                         pass
-                    pygame.mixer.music.play()
-                    while pygame.mixer.music.get_busy() == True:
-                        pass
+                    
                 else:
                     logging.info('INCORRECT')
                     bone_game.clear_strip_set_led(bone_game.INCORRECT, red)
@@ -233,10 +231,7 @@ if __name__ == '__main__':
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game_key.ANSWER_KEY[bone_game.selected_bone()]], green)
                     #play wrong sound
                     pygame.mixer.music.load('sounds/wrong.wav')
-                    pygame.mixer.music.play()
-                    while pygame.mixer.music.get_busy() == True:
-                        pass
-                    pygame.mixer.music.play()
+                    pygame.mixer.music.play(loops=1)
                     while pygame.mixer.music.get_busy() == True:
                         pass
 
