@@ -208,7 +208,8 @@ if __name__ == '__main__':
                 bone_game.clear_strip()
                 if bone_game_key.ANSWER_KEY[bone_game.selected_bone()] == bone_game.selected_bone_name():
                     logging.info('CORRECT')
-                    bone_game.clear_strip_set_led(bone_game.CORRECT, green)
+                    for led in bone_game.CORRECT:
+                        bone_game.set_led(led, green)
                     # The bone and bone name match
                     # Set the bone led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
@@ -222,7 +223,8 @@ if __name__ == '__main__':
                     
                 else:
                     logging.info('INCORRECT')
-                    bone_game.clear_strip_set_led(bone_game.INCORRECT, red)
+                    for led in bone_game.INCORRECT:
+                        bone_game.set_led(led, red)
                     # Set the bone led to green
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], green)
                     # Set the selected bone name led to red

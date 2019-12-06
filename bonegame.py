@@ -70,8 +70,8 @@ class BoneGame():
         'S': 27, 'T': 33, 'U': 42, 'V': 36, 'W': 32, 'X': 26
     }
 
-    CORRECT = 48
-    INCORRECT = 49
+    CORRECT = [48, 49, 50]
+    INCORRECT = [51, 52, 53]
 
     def __init__(self, debug = False):
         self.debug = debug
