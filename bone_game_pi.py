@@ -219,9 +219,6 @@ if __name__ == '__main__':
                     pygame.mixer.music.play()
                     while pygame.mixer.music.get_busy() == True:
                         pass
-                    pygame.mixer.music.play()
-                    while pygame.mixer.music.get_busy() == True:
-                        pass
                     
                 else:
                     logging.info('INCORRECT')
