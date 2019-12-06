@@ -88,7 +88,7 @@ class BoneGame():
         self.first_choice_time = None
         self.led_off = [0, 0, 0]
         self.button_test = False
-        self.led_count = 50
+        self.led_count = 54
 
         # self.game_heartbeat = game_heartbeat
 
