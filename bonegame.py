@@ -416,7 +416,7 @@ class Heartbeat():
         self.teensy_heartbeat_same_response_count = 0
         self.teensy_heartbeat_same_response_count_max = 3
         self.heartbeat = -1
-        logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
+        logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
 
 
     def heartbeat_fail_reset(self):
