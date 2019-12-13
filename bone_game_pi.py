@@ -64,7 +64,7 @@ green = [0, 255, 0]
 
 # Main program logic follows:
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
+    logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
 
     logging.info("Starting Bone Game")
 
@@ -73,9 +73,9 @@ if __name__ == '__main__':
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
 
-    logging.info ('Press Ctrl-C to quit.')
-    if not args.clear:
-        logging.info('Use "-c" argument to clear LEDs on exit')
+    # logging.info ('Press Ctrl-C to quit.')
+    # if not args.clear:
+        # logging.info('Use "-c" argument to clear LEDs on exit')
 
     bone_game = BoneGame()
 
@@ -187,9 +187,12 @@ if __name__ == '__main__':
                     if time.time() - start_time >= bone_game.SOUND_CUES[current_cue]:
                         current_cue_str = str(bone_game.SOUND_CUES[current_cue])
                         current_cue_leds = sound_cue_led_map[current_cue_str]
+                        logging.info('Cue %d' % (current_cue))
                         bone_game.clear_strip()
                         for cue_led in current_cue_leds:
-                            bone_game.set_led(cue_led['led_num'], cue_led['color'])
+                            res = bone_game.set_led(cue_led['led_num'], cue_led['color'])
+                            logging.info('set_led: led_num: %d, res: %s' % (cue_led['led_num'], str(res)) )
+                        
                         # bone_game.clear_strip_set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
