@@ -254,6 +254,7 @@ class BoneGame():
 
     def set_led(self, led_num, color):
         logging.debug('FUNC CALL: ' + self.set_led.__name__ + ': ' + str(led_num))
+        res = None
         if not self.colors_equal(self.led_states[led_num], color):
             data = [int(Commands.set_led)]
             data.append(led_num)
