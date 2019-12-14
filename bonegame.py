@@ -18,6 +18,7 @@ class Commands(IntEnum):
     reset_teensy = 8
     heartbeat = 9
     send_log = 10
+    set_random_leds = 11
 
 
 class HeartbeatMessages(IntEnum):
@@ -260,6 +261,15 @@ class BoneGame():
             res = self.write_data(data)
             self.set_led_state(led_num, color)
             # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
+        return res
+
+    def set_random_leds(self, led_count):
+        logging.debug('FUNC CALL: ' + self.set_random_leds.__name__ + ': ' + str(led_count))
+        self.clear_led_states()
+        data = [int(Commands.set_random_leds)]
+        data.append(led_count)
+        res = self.write_data(data)
+        # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
         return res
 
     def reset_game(self):
