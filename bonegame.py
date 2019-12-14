@@ -264,7 +264,7 @@ class BoneGame():
         return res
 
     def set_random_leds(self, led_count):
-        logging.debug('FUNC CALL: ' + self.set_random_leds.__name__ + ': ' + str(led_count))
+        logging.info('FUNC CALL: ' + self.set_random_leds.__name__ + ': ' + str(led_count))
         self.clear_led_states()
         data = [int(Commands.set_random_leds)]
         data.append(led_count)
