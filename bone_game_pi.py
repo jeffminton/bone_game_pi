@@ -192,7 +192,7 @@ if __name__ == '__main__':
                         # for cue_led in current_cue_leds:
                         res = bone_game.set_random_leds(6)
                         # res = bone_game.set_led(cue_led['led_num'], cue_led['color'])
-                        logging.info('set_led: led_num: %d, res: %s' % (cue_led['led_num'], str(res)) )
+                        logging.info('set_random_leds: res: %s' % (str(res)) )
                     
                         # bone_game.clear_strip_set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
