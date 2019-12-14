@@ -194,7 +194,7 @@ class BoneGame():
         while( retry_count < retry_max ):
             try:
                 res = self.bus.write_block_data(BoneGame.DEVICE_ADDRESS, BoneGame.DEVICE_REG_MODE1, data)
-                return res
+                return retry_count
             except OSError:
                 # logging.debug( 'Retry: %s' % (data) )
                 retry_count += 1
