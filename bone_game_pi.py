@@ -64,18 +64,18 @@ green = [0, 255, 0]
 
 # Main program logic follows:
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
+    logging.basicConfig(format='%(levelname)s %(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
 
-    logging.info("Starting Bone Game")
+    logging.warning("Starting Bone Game")
 
     # Process arguments
     parser = argparse.ArgumentParser()
     parser.add_argument('-c', '--clear', action='store_true', help='clear the display on exit')
     args = parser.parse_args()
 
-    # logging.info ('Press Ctrl-C to quit.')
+    # logging.warning ('Press Ctrl-C to quit.')
     # if not args.clear:
-        # logging.info('Use "-c" argument to clear LEDs on exit')
+        # logging.warning('Use "-c" argument to clear LEDs on exit')
 
     bone_game = BoneGame()
 
@@ -109,20 +109,20 @@ if __name__ == '__main__':
             #     heartbeat = bone_game.get_heartbeat()
             #     if heartbeat != '1':
             #         teensy_heartbeat_missed_count += 1
-            #         logging.info('NO Heartbeat returned, Fail count %d' % (teensy_heartbeat_missed_count))
+            #         logging.warning('NO Heartbeat returned, Fail count %d' % (teensy_heartbeat_missed_count))
             #         if teensy_heartbeat_missed_count > teensy_heartbeat_missed_count_max:
-            #             logging.info('NO Heartbeat returned, restarting')
+            #             logging.warning('NO Heartbeat returned, restarting')
             #             bone_game.restart_teensy()
             #             time.sleep(1)
             #             bone_game.reset_game()
             #             teensy_heartbeat_missed_count = 0
             #     else:
-            #         logging.info('Heartbeat returned')
+            #         logging.warning('Heartbeat returned')
             #Wait until the user chooses a bone
             heartbeat.get_heartbeat()
             if bone_game.selected_bone() == None:
                 # No bone selected yet
-                bone_game.heartbeat_log('Waiting for bone selection', logging.debug)
+                bone_game.heartbeat_log('Waiting for bone selection', logging.info)
                 bone_game.get_letter('selected_bone')
                 # Ensure selected bone is in the LETTER_LED_MAP
                 if(bone_game.selected_bone() not in bone_game.LETTER_LED_MAP.keys()):
@@ -136,21 +136,21 @@ if __name__ == '__main__':
                         # resetting if no name selected in timeout time
                         bone_game.set_first_choice_time()
                         # Print selected bone
-                        logging.debug('Selected Bone: %s' % (bone_game.selected_bone()))
+                        logging.info('Selected Bone: %s' % (bone_game.selected_bone()))
                         # Set the bone LED
                         bone_game.clear_strip_set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone()], red)
                     else:
-                        logging.debug('Did not get a propber bone selection. Selection was %s. Resetting Game' % (bone_game.selected_bone()))
+                        logging.info('Did not get a propber bone selection. Selection was %s. Resetting Game' % (bone_game.selected_bone()))
                         bone_game.reset_game()
 
             #Wait until the user chooses a bone name
             if bone_game.selected_bone() != None and bone_game.selected_bone_name() == None:
                 #Check is the timeout to reset has been reached
                 if bone_game.millis() >= bone_game.first_choice_time + bone_game.GAME_TIMEOUT:
-                    logging.debug('Timeout reached. Restart Game')
+                    logging.info('Timeout reached. Restart Game')
                     bone_game.reset_game()
                 # No bone name selected yet
-                bone_game.heartbeat_log('Waiting for bone name selection', logging.debug)
+                bone_game.heartbeat_log('Waiting for bone name selection', logging.info)
                 bone_game.get_letter('selected_bone_name')
                 # Ensure selected bone name is in the LETTER_LED_MAP
                 if(bone_game.selected_bone_name() not in bone_game.LETTER_LED_MAP.keys()):
@@ -159,7 +159,7 @@ if __name__ == '__main__':
                 elif(bone_game.selected_bone_name() in bone_game.LETTER_LED_MAP.keys()):
                     # Bone name is in the LETTER_LED_MAP
                     # Print selected bone name
-                    logging.debug('Selected Bone Name: %s' % (bone_game.selected_bone_name()))
+                    logging.info('Selected Bone Name: %s' % (bone_game.selected_bone_name()))
                     # Set the bone name LED
                     bone_game.set_led(bone_game.LETTER_LED_MAP[bone_game.selected_bone_name()], green)
             
@@ -170,13 +170,15 @@ if __name__ == '__main__':
                     cue_str = str(cue)
                     sound_cue_led_map[cue_str] = []
                     for i in  range(8):
-                        sound_cue_led_map[cue_str].append({
+                        cue_led_set = {
                             'led_num': random.randint(0, len(bone_game.LETTER_LED_MAP) - 1),
                             'color': bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)]
-                        })
+                        }
+                        sound_cue_led_map[cue_str].append(cue_led_set)
+                        logging.info(str(cue_led_set))
                 time.sleep(3)
                 # Play the "Thinking" music
-                logging.info('Selections chosen. play song')
+                logging.warning('Selections chosen. play song')
                 pygame.mixer.music.load('sounds/beeps.wav')
                 pygame.mixer.music.play()
 
@@ -187,13 +189,13 @@ if __name__ == '__main__':
                     if time.time() - start_time >= bone_game.SOUND_CUES[current_cue]:
                         current_cue_str = str(bone_game.SOUND_CUES[current_cue])
                         current_cue_leds = sound_cue_led_map[current_cue_str]
-                        logging.info('Cue %d' % (current_cue))
+                        logging.warning('Cue %d' % (current_cue))
                         bone_game.clear_strip()
                         for cue_led in current_cue_leds:
                         # res = bone_game.set_random_leds(6)
                             res = bone_game.set_led(cue_led['led_num'], cue_led['color'])
-                            logging.info('set_random_leds: res: %s' % (str(res)) )
-                    
+                            logging.warning('set_led: led_num: %d, res: %s' % (cue_led['led_num'], str(res)) )
+                        
                         # bone_game.clear_strip_set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
@@ -204,12 +206,12 @@ if __name__ == '__main__':
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         current_cue += 1
 
-                logging.info('Song done. Set correct/incorrect')
+                logging.warning('Song done. Set correct/incorrect')
                 # Check if the bone name is correct for the selected bone
                 bone_game.clear_strip()
                 bone_game.clear_strip()
                 if bone_game_key.ANSWER_KEY[bone_game.selected_bone()] == bone_game.selected_bone_name():
-                    logging.info('CORRECT')
+                    logging.warning('CORRECT')
                     for led in bone_game.CORRECT:
                         bone_game.set_led(led, green)
                     # The bone and bone name match
@@ -224,7 +226,7 @@ if __name__ == '__main__':
                         pass
                     
                 else:
-                    logging.info('INCORRECT')
+                    logging.warning('INCORRECT')
                     for led in bone_game.INCORRECT:
                         bone_game.set_led(led, red)
                     # Set the bone led to green

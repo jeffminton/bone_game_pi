@@ -73,10 +73,10 @@ green = [0, 255, 0]
 
 # Main program logic follows:
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/button_test.log',level=logging.DEBUG)
+    logging.basicConfig(format='%(levelname)s %(asctime)s %(message)s', filename='/var/log/button_test.log',level=logging.INFO)
 
     print("Starting Button Test")
-    logging.info("Starting Button Test")
+    logging.warning("Starting Button Test")
 
     # Process arguments
     parser = argparse.ArgumentParser()
@@ -84,10 +84,10 @@ if __name__ == '__main__':
     # args = parser.parse_args()
 
     # print ('Press Ctrl-C to quit.')
-    # logging.info ('Press Ctrl-C to quit.')
+    # logging.warning ('Press Ctrl-C to quit.')
     # if not args.clear:
     #     print('Use "-c" argument to clear LEDs on exit')
-    #     logging.info('Use "-c" argument to clear LEDs on exit')
+    #     logging.warning('Use "-c" argument to clear LEDs on exit')
 
     bone_game = BoneGame(debug = False)
 
@@ -110,7 +110,7 @@ if __name__ == '__main__':
                 bone_game.set_button_test_on()
             letter = bone_game.get_letter_test()
             if letter in bone_game.get_button_states().keys() and bone_game.get_button_states()[letter] == True:
-                bone_game.heartbeat_log('Key: %s' % (str(letter)), logging.debug, True)
+                bone_game.heartbeat_log('Key: %s' % (str(letter)), logging.info, True)
                 bone_game.set_led(BoneGame.LETTER_LED_MAP[letter], red)
 
     except KeyboardInterrupt: # If CTRL+C is pressed, exit cleanly:

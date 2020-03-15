@@ -2,8 +2,8 @@
 Description=Bone_Game_Pi
 
 [Service]
-WorkingDirectory=/home/pi/bone_game_pi
-ExecStart=/usr/bin/python3 /home/pi/bone_game_pi/bone_game_pi.py
+WorkingDirectory=/home/pi/Projects/bone_game_pi
+ExecStart=/usr/bin/python3 /home/pi/Projects/bone_game_pi/bone_game_pi.py
 
 [Install]
 WantedBy=multi-user.target

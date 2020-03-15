@@ -93,7 +93,7 @@ class BoneGame():
     ]
 
     def __init__(self, debug = False):
-        self.debug = debug
+        self.info = debug
         self.bus = smbus.SMBus(1)    # 0 = /dev/i2c-0 (port I2C0), 1 = /dev/i2c-1 (port I2C1)
         self.heartbeat_interval = 2000
         self.heartbeat_durration = 50
@@ -174,7 +174,7 @@ class BoneGame():
         self.selections['selected_bone_name'] = None
 
     def restart_teensy(self):
-        logging.debug('FUNC CALL: ' + self.restart_teensy.__name__)
+        logging.info('FUNC CALL: ' + self.restart_teensy.__name__)
         # wiringpi.digitalWrite(BoneGame.ARDUINO_RST_PIN, wiringpi.LOW)
 
         wiringpi.digitalWrite(BoneGame.ARDUINO_GND_PIN, wiringpi.LOW)
@@ -189,14 +189,15 @@ class BoneGame():
         retry_max = 10
         retry_count = 0
 
-        # logging.debug( 'Write data: %s' % (data) )
+        # logging.info( 'Write data: %s' % (data) )
 
         while( retry_count < retry_max ):
             try:
+                self.heartbeat_log( 'write_data attempt', logging.info )
                 res = self.bus.write_block_data(BoneGame.DEVICE_ADDRESS, BoneGame.DEVICE_REG_MODE1, data)
                 return retry_count
             except OSError:
-                # logging.debug( 'Retry: %s' % (data) )
+                self.heartbeat_log( 'Retry write_data attempt %d' % (retry_count), logging.info )
                 retry_count += 1
 
 
@@ -221,21 +222,21 @@ class BoneGame():
     #     retry_max = 10
     #     retry_count = 0
 
-    #     self.heartbeat_log( 'read_data bytes', logging.debug, force=True )
+    #     self.heartbeat_log( 'read_data bytes', logging.info, force=True )
 
     #     while( retry_count < retry_max ):
     #         try:
-    #             self.heartbeat_log( 'get_letter', logging.debug )
+    #             self.heartbeat_log( 'get_letter', logging.info )
     #             res = self.bus.read_i2c_block_data(BoneGame.DEVICE_ADDRESS, BoneGame.DEVICE_REG_MODE1, 32)
     #             return res
     #         except OSError:
-    #             self.heartbeat_log( 'Retry read_data', logging.debug )
+    #             self.heartbeat_log( 'Retry read_data', logging.info )
     #             retry_count += 1
 
 
 
     def clear_strip(self):
-        logging.debug('FUNC CALL: ' + self.clear_strip.__name__)
+        logging.info('FUNC CALL: ' + self.clear_strip.__name__)
         self.clear_led_states()
         data = [int(Commands.clear_strip)]
         res = self.write_data(data)
@@ -243,7 +244,7 @@ class BoneGame():
 
 
     def clear_strip_set_led(self, led_num, color):
-        logging.debug('FUNC CALL: ' + self.clear_strip_set_led.__name__ + ': ' + str(led_num))
+        logging.info('FUNC CALL: ' + self.clear_strip_set_led.__name__ + ': ' + str(led_num))
         self.clear_led_states()
         data = [int(Commands.clear_then_set_led)]
         data.append(led_num)
@@ -253,8 +254,7 @@ class BoneGame():
         # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
 
     def set_led(self, led_num, color):
-        logging.debug('FUNC CALL: ' + self.set_led.__name__ + ': ' + str(led_num))
-        res = None
+        logging.info('FUNC CALL: ' + self.set_led.__name__ + ': ' + str(led_num))
         if not self.colors_equal(self.led_states[led_num], color):
             data = [int(Commands.set_led)]
             data.append(led_num)
@@ -262,7 +262,8 @@ class BoneGame():
             res = self.write_data(data)
             self.set_led_state(led_num, color)
             # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
-        return res
+            return res
+        return None
 
     def set_random_leds(self, led_count):
         logging.info('FUNC CALL: ' + self.set_random_leds.__name__ + ': ' + str(led_count))
@@ -274,7 +275,7 @@ class BoneGame():
         return res
 
     def reset_game(self):
-        logging.debug('FUNC CALL: ' + self.reset_game.__name__)
+        logging.info('FUNC CALL: ' + self.reset_game.__name__)
         data = [int(Commands.reset_game)]
         res = self.write_data(data)
         self.reset_selected_bone()
@@ -284,20 +285,20 @@ class BoneGame():
 
     def set_button_test_on(self):
         self.button_test = True
-        logging.debug('FUNC CALL: ' + self.set_button_test_on.__name__)
+        logging.info('FUNC CALL: ' + self.set_button_test_on.__name__)
         data = [int(Commands.button_test_on)]
         res = self.write_data(data)
 
 
     def set_button_test_off(self):
         self.button_test = False
-        logging.debug('FUNC CALL: ' + self.set_button_test_off.__name__)
+        logging.info('FUNC CALL: ' + self.set_button_test_off.__name__)
         data = [int(Commands.button_test_off)]
         res = self.write_data(data)
 
 
     def run_led_test(self):
-        logging.debug('FUNC CALL: ' + self.run_led_test.__name__)
+        logging.info('FUNC CALL: ' + self.run_led_test.__name__)
         data = [int(Commands.led_test)]
         res = self.write_data(data)
 
@@ -307,10 +308,10 @@ class BoneGame():
         retry_max = 10
         retry_count = 0
         while(button not in BoneGame.LETTER_LED_MAP.keys() and retry_count < retry_max):
-            self.heartbeat_log( 'get_letter', logging.debug )
+            self.heartbeat_log( 'get_letter', logging.info )
             try:
                 button = chr(self.read_data())
-                self.heartbeat_log( 'get_letter: %s' % (str(button)), logging.debug )
+                self.heartbeat_log( 'get_letter: %s' % (str(button)), logging.info )
             except TypeError:
                 button = None
             retry_count += 1
@@ -321,10 +322,10 @@ class BoneGame():
         retry_max = 10
         retry_count = 0
         while(button not in BoneGame.LETTER_LED_MAP.keys() and retry_count < retry_max):
-            self.heartbeat_log( 'get_letter', logging.debug )
+            self.heartbeat_log( 'get_letter', logging.info )
             try:
                 button = chr(self.read_data())
-                self.heartbeat_log( 'get_letter: %s' % (str(button)), logging.debug )
+                self.heartbeat_log( 'get_letter: %s' % (str(button)), logging.info )
             except TypeError:
                 button = None
             retry_count += 1
@@ -344,22 +345,22 @@ class BoneGame():
         while(button != end_char and invalid_data == False):
             button = ''
             while(button not in BoneGame.LETTER_LED_MAP.keys() and button != end_char and retry_count < retry_max):
-                self.heartbeat_log( 'get_buttons', logging.debug )
+                self.heartbeat_log( 'get_buttons', logging.info )
                 try:
                     byte = self.read_data()
                     button = chr(byte)
-                    self.heartbeat_log( 'get_buttons: %s' % (str(button)), logging.debug )
+                    self.heartbeat_log( 'get_buttons: %s' % (str(button)), logging.info )
                 except TypeError:
-                    self.heartbeat_log('get_buttons execption', logging.debug)
+                    self.heartbeat_log('get_buttons execption', logging.info)
                     button = None
                 retry_count += 1
-                self.heartbeat_log('Is button %s: %s' % (end_char, (button == end_char)), logging.debug)
+                self.heartbeat_log('Is button %s: %s' % (end_char, (button == end_char)), logging.info)
             retry_count = 0
             if button != end_char and button in BoneGame.LETTER_LED_MAP.keys():
-                self.heartbeat_log('set button %s true' % (str(button)), logging.debug)
+                self.heartbeat_log('set button %s true' % (str(button)), logging.info)
                 self.button_states[button] = True
             elif button != end_char and button not in BoneGame.LETTER_LED_MAP.keys():
-                self.heartbeat_log('invalid date: %s' % (str(button)), logging.debug)
+                self.heartbeat_log('invalid date: %s' % (str(button)), logging.info)
                 invalid_data = True
 
 
@@ -387,7 +388,7 @@ class BoneGame():
         elif self.millis() >= self.heartbeat_off_at:
             self.heartbeat = False
             #At the end of the pi heartbeat interval get the teensy logs
-            if self.debug:
+            if self.info:
                 debug_level('Get Device Logs')
                 # self.get_device_logs(debug_level)
             self.heartbeat_on_at = self.millis() + self.heartbeat_interval
@@ -427,7 +428,7 @@ class Heartbeat():
         self.teensy_heartbeat_same_response_count = 0
         self.teensy_heartbeat_same_response_count_max = 3
         self.heartbeat = -1
-        logging.basicConfig(format='%(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
+        logging.basicConfig(format='%(levelname)s %(asctime)s %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
 
 
     def heartbeat_fail_reset(self):
@@ -444,31 +445,31 @@ class Heartbeat():
             self.teensy_heartbeat_last = self.bone_game.millis()
             self.heartbeat = self.bone_game.get_heartbeat()
             try:
-                logging.debug('heartbeat returned RAW value: %s' % (str(self.heartbeat)))
-                logging.debug('heartbeat returned value: %s' % (HeartbeatMessages(self.heartbeat)))
+                logging.info('heartbeat returned RAW value: %s' % (str(self.heartbeat)))
+                logging.info('heartbeat returned value: %s' % (HeartbeatMessages(self.heartbeat)))
                 if HeartbeatMessages(self.heartbeat) == HeartbeatMessages.waiting_for_test_choice and self.bone_game.button_test == False:
                     self.heartbeat_fail_reset()
                 elif self.heartbeat == self.teensy_heartbeat_last_response:
                     self.teensy_heartbeat_same_response_count += 1
-                    logging.debug('Same Heartbeat returned, count %d' % (self.teensy_heartbeat_same_response_count))
+                    logging.info('Same Heartbeat returned, count %d' % (self.teensy_heartbeat_same_response_count))
                     if self.teensy_heartbeat_same_response_count > self.teensy_heartbeat_same_response_count_max:
-                        logging.debug('Same Heartbeat returned, restarting')
+                        logging.info('Same Heartbeat returned, restarting')
                         self.heartbeat_fail_reset()
                 else:
                     self.teensy_heartbeat_last_response = self.heartbeat
                     self.teensy_heartbeat_same_response_count = 0
 
             except ValueError as e:
-                logging.debug('Exception: Heartbeat returned value: %s' % (str(self.heartbeat)))
+                logging.info('Exception: Heartbeat returned value: %s' % (str(self.heartbeat)))
                 self.heartbeat = -1
             if self.heartbeat == -1:
                 self.teensy_heartbeat_missed_count += 1
-                logging.debug('NO Heartbeat returned, Fail count %d' % (self.teensy_heartbeat_missed_count))
+                logging.info('NO Heartbeat returned, Fail count %d' % (self.teensy_heartbeat_missed_count))
                 if self.teensy_heartbeat_missed_count > self.teensy_heartbeat_missed_count_max:
-                    logging.debug('NO Heartbeat returned, restarting')
+                    logging.info('NO Heartbeat returned, restarting')
                     self.heartbeat_fail_reset()
                     ret = -1
             else:
-                logging.debug('Heartbeat returned')
+                logging.info('Heartbeat returned')
             self.heartbeat = -1
         return ret
