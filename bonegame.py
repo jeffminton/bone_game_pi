@@ -263,7 +263,7 @@ class BoneGame():
             self.set_led_state(led_num, color)
             # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
             return res
-        return None
+        return -1
 
     def set_random_leds(self, led_count):
         logging.debug('FUNC CALL: ' + self.set_random_leds.__name__ + ': ' + str(led_count))
