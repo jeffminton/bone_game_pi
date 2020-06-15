@@ -64,7 +64,7 @@ green = [0, 255, 0]
 
 # Main program logic follows:
 if __name__ == '__main__':
-    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
+    logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
     
     logging.info("Starting Bone Game")
 
@@ -166,16 +166,16 @@ if __name__ == '__main__':
             # If both the bone and bone name are selected
             if bone_game.selected_bone() != None and bone_game.selected_bone_name() != None:
                 sound_cue_led_map = {}
-                for cue in bone_game.SOUND_CUES:
-                    cue_str = str(cue)
-                    sound_cue_led_map[cue_str] = []
-                    for i in  range(8):
-                        cue_led_set = {
-                            'led_num': random.randint(0, len(bone_game.LETTER_LED_MAP) - 1),
-                            'color': bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)]
-                        }
-                        sound_cue_led_map[cue_str].append(cue_led_set)
-                        logging.debug(str(cue_led_set))
+                # for cue in bone_game.SOUND_CUES:
+                #     cue_str = str(cue)
+                #     sound_cue_led_map[cue_str] = []
+                #     for i in  range(8):
+                #         cue_led_set = {
+                #             'led_num': random.randint(0, len(bone_game.LETTER_LED_MAP) - 1),
+                #             'color': bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)]
+                #         }
+                #         sound_cue_led_map[cue_str].append(cue_led_set)
+                #         logging.debug(str(cue_led_set))
                 time.sleep(3)
                 # Play the "Thinking" music
                 logging.info('Selections chosen. play song')
@@ -185,16 +185,21 @@ if __name__ == '__main__':
                 start_time = time.time()
                 current_cue = 0
                 # Flash the LEDs while the music plays
-                while pygame.mixer.music.get_busy() == True and current_cue < len(bone_game.SOUND_CUES):
-                    if time.time() - start_time >= bone_game.SOUND_CUES[current_cue]:
-                        current_cue_str = str(bone_game.SOUND_CUES[current_cue])
-                        current_cue_leds = sound_cue_led_map[current_cue_str]
-                        logging.info('Cue %d' % (current_cue))
-                        bone_game.clear_strip()
-                        for cue_led in current_cue_leds:
-                        # res = bone_game.set_random_leds(6)
-                            res = bone_game.set_led(cue_led['led_num'], cue_led['color'])
-                            logging.info('set_led: led_num: %d, res: %s' % (cue_led['led_num'], str(res)) )
+                bone_game.clear_strip()
+                logging.info('Clear LEDS and Start Thinking LEDs')
+                bone_game.start_thinking_leds()
+                while pygame.mixer.music.get_busy() == True:
+                    pass
+                    
+                    # if time.time() - start_time >= bone_game.SOUND_CUES[current_cue]:
+                    #     current_cue_str = str(bone_game.SOUND_CUES[current_cue])
+                    #     current_cue_leds = sound_cue_led_map[current_cue_str]
+                    #     logging.info('Cue %d' % (current_cue))
+                    #     bone_game.clear_strip()
+                    #     for cue_led in current_cue_leds:
+                    #     # res = bone_game.set_random_leds(6)
+                    #         res = bone_game.set_led(cue_led['led_num'], cue_led['color'])
+                    #         logging.info('set_led: led_num: %d, res: %s' % (cue_led['led_num'], str(res)) )
                         
                         # bone_game.clear_strip_set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
@@ -204,8 +209,9 @@ if __name__ == '__main__':
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
                         # bone_game.set_led(random.randint(0, len(bone_game.LETTER_LED_MAP) - 1), bone_game.COLOR_LIST[random.randint(0, len(bone_game.COLOR_LIST) - 1)])
-                        current_cue += 1
+                        # current_cue += 1
 
+                bone_game.stop_thinking_leds()
                 logging.info('Song done. Set correct/incorrect')
                 # Check if the bone name is correct for the selected bone
                 bone_game.clear_strip()

@@ -19,6 +19,8 @@ class Commands(IntEnum):
     heartbeat = 9
     send_log = 10
     set_random_leds = 11
+    start_thinking_leds = 12
+    end_thinking_leds = 13
 
 
 class HeartbeatMessages(IntEnum):
@@ -31,7 +33,7 @@ class HeartbeatMessages(IntEnum):
     sent_first_choice = 6
     sent_second_choce = 7
     sent_heartbeat = 8
-
+    startup = 9
 
 
 
@@ -283,6 +285,18 @@ class BoneGame():
         # res = bus.write_block_data(DEVICE_ADDRESS, DEVICE_REG_MODE1, data)
         return res
 
+    def start_thinking_leds(self):
+        logging.debug('FUNC CALL: ' + self.start_thinking_leds.__name__ )
+        data = [int(Commands.start_thinking_leds)]
+        res = self.write_data(data)
+        return res
+
+    def stop_thinking_leds(self):
+        logging.debug('FUNC CALL: ' + self.stop_thinking_leds.__name__ )
+        data = [int(Commands.end_thinking_leds)]
+        res = self.write_data(data)
+        return res
+
     def reset_game(self):
         logging.debug('FUNC CALL: ' + self.reset_game.__name__)
         data = [int(Commands.reset_game)]
@@ -437,7 +451,7 @@ class Heartbeat():
         self.teensy_heartbeat_same_response_count = 0
         self.teensy_heartbeat_same_response_count_max = 3
         self.heartbeat = -1
-        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', filename='/var/log/bone_game_pi.log',level=logging.INFO)
+        logging.basicConfig(format='%(asctime)s - %(levelname)s - %(message)s', filename='/var/log/bone_game_pi.log',level=logging.DEBUG)
 
 
     def heartbeat_fail_reset(self):
